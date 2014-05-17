@@ -1,0 +1,39 @@
+# Indicates that this entity has an invalid ID.
+INVALID_ID = -1
+
+# Types of connections:
+ASSOCIATION        = 0
+STRONG_AGGREGATION = 1
+WEAK_AGGREGATION   = 2
+SPECIALIZATION     = 3
+IMPLEMENTATION     = 4
+DEPENDENCY         = 5
+
+CONNECTION_TYPE = {
+    ASSOCIATION: "ASSOCIATION",
+    WEAK_AGGREGATION: "WEAK_AGGREGATION", 
+    STRONG_AGGREGATION: "STRONG_AGGREGATION", 
+    SPECIALIZATION: "SPECIALIZATION",
+    IMPLEMENTATION: "IMPLEMENTATION",
+    DEPENDENCY: "DEPENDENCY"
+}
+
+# Entities:
+CLASS     = 10
+INTERFACE = 11
+
+# Attributes:
+ATTRIB_ABSTRACT="abstract"
+ATTRIB_UTILITY="utility"
+ATTRIB_INTERFACE="interface"
+ATTRIB_NONE=""
+
+# Some predefined types:
+TYPE_VARIABLE="variable"
+TYPE_METHOD="method"
+
+# Access specifiers:
+ACCESS_PRIVATE="private"
+ACCESS_PROTECTED="protected"
+ACCESS_PUBLIC="public"
+ACCESS_PACKAGE="package"

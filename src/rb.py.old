@@ -1,0 +1,90 @@
+#!/usr/bin/python
+
+from core.model import Database
+from core.cmodel import ClassEntity
+from core.cmodel import ClassConnection
+from core.cmodel import Member
+import core.constants as constants
+from uml.plantumlgenerator import PlantUmlGenerator
+from uml import plantuml as puml
+
+db = Database()
+
+# Test input:
+
+# composition:
+point = ClassEntity(entity_name='Point')
+point.addMethod("getCoordinates", constants.ACCESS_PUBLIC)
+point.addMethod("setCoordinates", constants.ACCESS_PUBLIC)
+
+circle = ClassEntity(entity_name='Circle')
+
+circle.addVariable("int mCenter", constants.ACCESS_PRIVATE)
+circle.addVariable("int mDiameter", constants.ACCESS_PRIVATE)
+circle.addVariable("int mDebug", constants.ACCESS_PRIVATE)
+circle.addVariable("int mCenterX", constants.ACCESS_PRIVATE)
+circle.addVariable("int mCenterY", constants.ACCESS_PRIVATE)
+
+circle.addMethod("getCenter", constants.ACCESS_PUBLIC)
+circle.addMethod("setCenter", constants.ACCESS_PUBLIC)
+
+ids = db.add(circle, point)
+# Circle contains point.
+conn = ClassConnection.fromList(ids, constants.STRONG_AGGREGATION)
+db.addConnection(conn)
+
+# Aggregation:
+# Window aggregates Shape 1 - *
+window = ClassEntity(entity_name='Window')
+window.addMethod("getTopLeftPosition", constants.ACCESS_PUBLIC)
+window.addMethod("getBottomRightPosition", constants.ACCESS_PUBLIC)
+
+shape  = ClassEntity(entity_name='Shape')
+ids = db.add(window, shape)
+conn = ClassConnection.fromList(ids, constants.WEAK_AGGREGATION)
+db.addConnection(conn)
+frame = ClassEntity(entity_name='Frame')
+ids = db.add(frame)
+conn = ClassConnection(window.getId(), frame.getId(), constants.ASSOCIATION)
+db.addConnection(conn)
+
+# Inherits:
+# Circle inherits Shape
+# Square inherits Shape
+
+circle = ClassEntity(entity_name='Circle')
+square = ClassEntity(entity_name='Square')
+db.add(circle, square)
+conn = ClassConnection(shape.getId(), circle.getId(), constants.SPECIALIZATION)
+db.addConnection(conn)
+conn = ClassConnection(shape.getId(), square.getId(), constants.SPECIALIZATION)
+db.addConnection(conn)
+
+# Dependency: how?
+# Shape depends on DrawingContext
+
+context = ClassEntity(entity_name='DrawingContext', entity_type=constants.INTERFACE)
+context.addVariable("void* mGfxMemory", constants.ACCESS_PRIVATE)
+context.addMethod("draw", constants.ACCESS_PROTECTED)
+db.add(context)
+conn = ClassConnection(shape.getId(), context.getId(), constants.DEPENDENCY)
+db.addConnection(conn)
+
+# Interface:
+# WindowsDC implements DrawingContext
+
+dc = ClassEntity(entity_name='WindowsDC')
+db.add(dc)
+conn = ClassConnection(context.getId(), dc.getId(), constants.IMPLEMENTATION)
+db.addConnection(conn)
+
+db.dump()
+
+g = PlantUmlGenerator()
+db.generate(g)
+
+print ("Generated text '" + g.getText() + "'")
+
+puml = puml.PlantUML(jarFile="./uml/plantuml.jar")
+ret = puml.convert(g.getText())
+puml.save('temp.png')

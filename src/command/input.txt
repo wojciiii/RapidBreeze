@@ -1,0 +1,49 @@
+# 
+# Class diagram:
+#
+
+# Create entity:
+create (class|interface) $1
+
+# Set entity attribute:
+set attrib $entity (abstract | utility | ???)
+
+# Add member to entity:
+add $entity::$1 (private|protected|public|package)
+
+# Set entity member visibility:
+set $entity:$1 (private|protected|public|package)
+
+# Delete a member:
+delete $entity::$1
+
+# Set type of some member.
+set $entity:$1 type (string|int|???)
+
+# Clear all previously set properties.
+reset $entity:$1
+
+# 
+# Connections:
+#
+
+add association $1 $2 
+delete association $1 $2 
+set association $1 $2 $n $m
+
+add specialization $1 $2 
+delete specialization $1 $2 
+
+add implmenentation $1 $2 
+delete implmenentation $1 $2 
+
+add weak_aggregation $1 $2 
+add strong_aggregation $1 $2 
+delete weak/strong_aggregation $1 $2
+
+add dependency $1 $2 
+delete dependency $1 $2
+
+# Clear every connection to/from $1
+
+clear $1

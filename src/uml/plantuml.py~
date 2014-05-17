@@ -1,0 +1,37 @@
+import subprocess
+
+class PlantUML(object):
+
+    def __init__(self, 
+                 javaInterpreter="/usr/bin/java", 
+                 jarFile="./plantuml.jar"):
+        self.javaInterpreter = javaInterpreter
+        self.jarFile         = jarFile
+        self.output          = ""
+        self.retcode         = -1;
+
+    def execute(self, text_input):
+        proc = subprocess.Popen([self.javaInterpreter, 
+                                "-jar", 
+                                self.jarFile,
+                                "-pipe"], 
+                                stdin=subprocess.PIPE, 
+                                stdout=subprocess.PIPE)
+
+        self.output = proc.communicate(input=text_input)[0]
+        self.retcode = proc.returncode
+
+        return self.retcode
+
+    def getOutput(self):
+        return self.output
+
+if __name__ == "__main__":
+    print("Testing ..")
+
+    p = PlantUML();
+    ret = p.execute("test");
+
+    print("rc = " + str(ret))
+
+    o = p.getOutput()
