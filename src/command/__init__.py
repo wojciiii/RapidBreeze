@@ -155,7 +155,8 @@ class CommandParserThread(threading.Thread):
 
         try:
             ret = command.execute()
-            self.commandResponseFnct(ret)
+            if not command.supressOutput():
+                self.commandResponseFnct(ret)
         except Exception as e:
             print "Command execute failed: %s." % str(e)
 

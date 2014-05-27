@@ -17,6 +17,10 @@ class Command(object):
         return False
 
     @staticmethod
+    def supressOutput():
+        return False
+
+    @staticmethod
     def name():
         raise NotImplementedError()
 
@@ -60,6 +64,10 @@ class UndoCommand(Command):
         pass
 
     @staticmethod
+    def supressOutput():
+        return True
+
+    @staticmethod
     def name():
         return "undo"
 
@@ -69,6 +77,10 @@ class RedoCommand(Command):
 
     def cancel(self):
         pass
+
+    @staticmethod
+    def supressOutput():
+        return True
 
     @staticmethod
     def name():
@@ -93,6 +105,10 @@ class EmptyCommand(Command):
         pass
 
     @staticmethod
+    def supressOutput():
+        return True
+
+    @staticmethod
     def name():
         return "empty"
 
@@ -105,6 +121,10 @@ class SetOptionCommand(Command):
     def execute(self):
         self.context.setOption(self.name, self.value)
         return "OK"
+
+    @staticmethod
+    def supressOutput():
+        return True
 
     @staticmethod
     def createInstance(name, value):
@@ -132,6 +152,10 @@ class ForceUpdateCommand(Command):
     def execute(self):
         self.context.forceUpdate()
         return "OK"
+
+    @staticmethod
+    def supressOutput():
+        return True
 
     @staticmethod
     def createInstance():

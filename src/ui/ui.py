@@ -3,24 +3,33 @@
 import wx
 from wx.lib.buttons import GenBitmapTextButton
 import StringIO
+from functools import wraps
 
 from command import CommandParser
 
+def CallAfterDecorator(func):
+    def wrapper(*args, **kwargs):
+        wx.CallAfter(func, *args, **kwargs)
+    return wrapper
+
 class MainWindow(wx.Frame):
     def __init__(self, parent, id, title, commandParser):
-        wx.Frame.__init__(self, parent, id, title, size=(500, 550))
+        wx.Frame.__init__(self, parent, id, title, size=(800, 600))
 
         wx.InitAllImageHandlers()
-        #wx.Image.AddHandler(wx.PNGHandler()) 
 
+        self.responseNum     = 0
         self.closeInProgress = False
         self.commandParser   = commandParser
 
+        # Notice that wx.CallAfter is used to call these functions, as
+        # they can be called from another thread than the main UI
+        # thread.
         handlers = {
             CommandParser.OnUpdate: self.bitmapUpdated,
             CommandParser.OnCommandResponse: self.commandResponse,
             CommandParser.OnCommandError: self.commandError,
-            CommandParser.OnExit: self.onQuit,
+            CommandParser.OnExit: self.onExit,
             CommandParser.OnUpdateImage: self.updateImage
         }
         self.commandParser.registerHandlers(handlers)
@@ -68,7 +77,7 @@ class MainWindow(wx.Frame):
 
         bmp = wx.EmptyBitmap(self.MaxImageSize, self.MaxImageSize)
         dc = wx.MemoryDC(bmp)
-        dc.SetBackground(wx.Brush("white")) # or some other color
+        dc.SetBackground(wx.Brush("white"))
         dc.Clear()
         del dc
 
@@ -98,14 +107,21 @@ class MainWindow(wx.Frame):
         st2.SetFont(font)
         hbox3.Add(st2, flag=wx.RIGHT, border=8)
 
-        self.textOutput = wx.TextCtrl(parent=self.panel, style=wx.TE_PROCESS_ENTER)
+        self.textOutput = wx.TextCtrl(self.panel, -1, "",size=(200, 75), style=wx.TE_MULTILINE | wx.TE_RICH2 | wx.TE_READONLY)
+
         hbox3.Add(self.textOutput, proportion=1)
         vbox.Add(hbox3, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, border=10)
+
+        #self.textOutput.AppendText("Test0\n")
+        #self.textOutput.AppendText("Test1\n")
+
+        for i in range(10):
+            self.commandResponse("Test0")
+            self.commandError("Test1")
 
         self.panel.SetSizer(vbox)
 
         # React to key presses and when enter is pressed.
-        #self.textInput.Bind(wx.EVT_TEXT, self.onKeyPress)
         self.textInput.Bind(wx.EVT_TEXT_ENTER, self.onEnterPressed)
 
         self.CreateStatusBar()
@@ -113,7 +129,6 @@ class MainWindow(wx.Frame):
         self.Show(True)
 
         self.Bind(wx.EVT_CLOSE, self.onCloseFromUI)
-
 
         # Execute saved commands, if any.
         self.commandParser.executeSavedCommands()
@@ -129,21 +144,29 @@ class MainWindow(wx.Frame):
     def bitmapUpdated(self, bitmap):
         print("bitmapUpdated!")
 
+    @CallAfterDecorator
     def commandResponse(self, responseStr):
-        #print("response: %s" % response)
-        self.textOutput.SetValue(responseStr)
+        self.textOutput.SetInsertionPoint(0)
+        self.textOutput.AppendText("(%d) %s\n" % (self.responseNum, responseStr))
+        self.textOutput.ScrollPages(1)
+        self.responseNum += 1
 
+    @CallAfterDecorator
     def commandError(self, errorStr):
-        #print("response: %s" % response)
-        self.textOutput.SetValue("ERROR: " + errorStr)
+        self.textOutput.SetInsertionPoint(0)
+        self.textOutput.AppendText("(%d) error: %s\n" % (self.responseNum, errorStr))
+        self.textOutput.ScrollLines(0)
+        self.responseNum += 1
 
     # Command parser calls this method in order to signal that the UI should close.
-    def onQuit(self):
+    @CallAfterDecorator
+    def onExit(self):
         if not self.closeInProgress:
             self.closeInProgress = True
             self.Destroy()
 
-    def updateImageImpl(self, buffer):
+    @CallAfterDecorator
+    def updateImage(self, buffer):
         sbuf = StringIO.StringIO(buffer)
 
         img = wx.ImageFromStream(sbuf)
@@ -164,10 +187,6 @@ class MainWindow(wx.Frame):
         self.Refresh()
         print ("Image updated %d bytes.." % len(buffer))
 
-    def updateImage(self, buffer):
-        #print ("Updating image..")
-        wx.CallAfter(self.updateImageImpl, buffer)
-
     # This method gets called when the UI received a signal to close itself.
     def onCloseFromUI(self, event):
         if not self.closeInProgress:
@@ -176,6 +195,3 @@ class MainWindow(wx.Frame):
             self.commandParser.stop()
             self.Destroy()
 
-#app = wx.App(0)
-#MainWindow(None, -1, 'RapidBreeze', None)
-#app.MainLoop()
